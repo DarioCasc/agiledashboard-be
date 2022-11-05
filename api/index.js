@@ -1,7 +1,7 @@
 const app = require('express').Router()
-const welcomeRoute = require('./routes/welcome')
+const helloRoute = require('./routes/hello')
 
 module.exports = () => {
-  app.use('/welcome', welcomeRoute)
+  app.use('/hello', helloRoute)
   return app
 }

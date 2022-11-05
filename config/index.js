@@ -10,6 +10,6 @@ if (!envFound) {
 exports.env = {
   port: parseInt(process.env.PORT, 10),
   api: {
-    prefix: '/rest/api/agile'
+    prefix: '/rest/api/deloitte'
   }
 }
