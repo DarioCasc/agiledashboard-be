@@ -1,7 +1,7 @@
 const app = require('express').Router()
-const helloRoute = require('./routes/hello')
+const agileDashboardRoute = require('./routes/agileDashboard')
 
 module.exports = () => {
-  app.use('/hello', helloRoute)
+  app.use('/agile-dashboard', agileDashboardRoute)
   return app
 }
