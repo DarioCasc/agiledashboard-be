@@ -5,5 +5,6 @@ route.get('/projects', agileDashboardController.getListOfProject)
 route.get('/rapidView/:projectName', agileDashboardController.getRapidViewFromProject)
 route.get('/sprint/:rapidViewId', agileDashboardController.getLastSprintForRapidView)
 route.get('/rapidView/:rapidViewId/sprint/:sprintId', agileDashboardController.getBoardIssuesForSprint)
+route.get('/listStatus', agileDashboardController.getListStatus)
 
 module.exports = route

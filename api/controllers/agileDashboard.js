@@ -9,7 +9,7 @@ exports.getListOfProject = async (req, res, next) => {
     agileDashboardProjectList = await jiraSession.listProjects()
     console.log('getListOfProject end')
   } catch (err) {
-
+    console.log(err)
   }
   res.status(200).json({ agileDashboardProjectList })
 }
@@ -58,6 +58,20 @@ exports.getBoardIssuesForSprint = async (req, res, next) => {
   }
 
   res.status(200).json({ issueSprintDetail })
+}
+
+exports.getListStatus = async (req, res, next) => {
+  const jiraSession = getJiraSession()
+  let agileDashboardStatusList = {}
+  try {
+    console.log('getListStatus start')
+    agileDashboardStatusList = await jiraSession.listStatus()
+    console.log('getListStatus end')
+  } catch (err) {
+
+  }
+
+  res.status(200).json({ agileDashboardStatusList })
 }
 
 function getJiraSession () {
