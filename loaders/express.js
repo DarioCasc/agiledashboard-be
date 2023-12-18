@@ -1,4 +1,5 @@
 const express = require('express')
+const bodyParser = require('body-parser')
 const path = require('path')
 const helmet = require('helmet')
 const compression = require('compression')
@@ -8,6 +9,7 @@ const routes = require('../api')
 module.exports = (app) => {
   app.use(helmet())
   app.use(compression())
+  app.use(bodyParser.json())
 
   // Enable Cross Origin Resource Sharing to all origins by default
   app.use((req, res, next) => {
