@@ -1,139 +1,113 @@
-const JiraApi = require('jira-client')
+const jiraService = require('../services/jiraService')
 
-exports.getListOfProject = async (req, res, next) => {
-  const jiraSession = getJiraSession()
-  let agileDashboardProjectList = []
-
+exports.getListOfProject = async (req, res) => {
   try {
     console.log('getListOfProject start')
-    agileDashboardProjectList = await jiraSession.listProjects()
+    const projects = await jiraService.getProjects()
     console.log('getListOfProject end')
-  } catch (err) {
-    console.log(err)
+
+    res.status(200).json({ agileDashboardProjectList: projects })
+  } catch (error) {
+    res.status(500).json({
+      message: 'Errore nel recupero dei progetti',
+      error: error.message
+    })
   }
-  res.status(200).json({ agileDashboardProjectList })
 }
 
-exports.getRapidViewFromProject = async (req, res, next) => {
-  const jiraSession = getJiraSession()
-  const { projectName } = req.params
-  let rapidView = {}
-  try {
-    console.log('getRapidViewFromProject start')
-    rapidView = await jiraSession.findRapidView(projectName)
-    console.log('getRapidViewFromProject end')
-  } catch (err) {
-
-  }
-
-  res.status(200).json({ rapidView })
-}
-
-exports.getLastSprintForRapidView = async (req, res, next) => {
-  const jiraSession = getJiraSession()
-  const { rapidViewId } = req.params
-  let lastSprint = {}; let sprintDetail = {}
-  try {
-    console.log('getLastSprintForRapidView start')
-    if (/* rapidViewId !== '68' */ true) {
-      lastSprint = await jiraSession.getLastSprintForRapidView(rapidViewId)
-      sprintDetail = await jiraSession.getSprintIssues(rapidViewId, /* listSprints.sprints[size].id */ lastSprint.id)
-    } else {
-      const listSprints = await jiraSession.listSprints(rapidViewId)
-      const sprint = listSprints.sprints[listSprints.sprints.length - 2]
-      sprintDetail = await jiraSession.getSprintIssues(rapidViewId, sprint.id)
-    }
-    console.log('getLastSprintForRapidView end')
-  } catch (err) {
-
-  }
-
-  res.status(200).json({ sprintDetail })
-}
-
-exports.getBoardIssuesForSprint = async (req, res, next) => {
-  const jiraSession = getJiraSession()
-  const { rapidViewId, sprintId } = req.params
-  let issueSprintDetail = {}
-  try {
-    console.log('getBoardIssuesForSprint start')
-    issueSprintDetail = await jiraSession.getBoardIssuesForSprint(rapidViewId, sprintId, 0, 200)
-    console.log('getBoardIssuesForSprint end')
-  } catch (err) {
-
-  }
-
-  res.status(200).json({ issueSprintDetail })
-}
-
-exports.getListStatus = async (req, res, next) => {
-  const jiraSession = getJiraSession()
-  let agileDashboardStatusList = {}
+exports.getListStatus = async (req, res) => {
   try {
     console.log('getListStatus start')
-    agileDashboardStatusList = await jiraSession.listStatus()
+    const statuses = await jiraService.getStatuses()
     console.log('getListStatus end')
-  } catch (err) {
 
+    res.status(200).json({ agileDashboardStatusList: statuses })
+  } catch (error) {
+    res.status(500).json({
+      message: 'Errore nel recupero degli status',
+      error: error.message
+    })
   }
-
-  res.status(200).json({ agileDashboardStatusList })
 }
 
-exports.getListUser = async (req, res, next) => {
-  const jiraSession = getJiraSession()
-  let agileDashboardUserList = {}
+exports.getRapidViewFromProject = async (req, res) => {
   try {
-    console.log('getListUser start')
-    agileDashboardUserList = await jiraSession.getUsersIssues('dcascone')
-    console.log('getListUser end')
-  } catch (err) {
-    console.log('err', err)
-  }
+    const { projectName } = req.params
+    console.log(`getRapidViewFromProject start: ${projectName}`)
 
-  res.status(200).json({ agileDashboardUserList })
+    const rapidView = await jiraService.getRapidViewFromProject(projectName)
+
+    console.log('getRapidViewFromProject end')
+
+    res.status(200).json({ rapidView })
+  } catch (error) {
+    res.status(500).json({
+      message: 'Errore nel recupero del Rapid View per il progetto',
+      error: error.message
+    })
+  }
 }
 
-exports.getIssueDuringFramingForBusinessRequest = async (req, res, next) => {
-  const jiraSession = getJiraSession()
-  const { project } = req.params
+exports.getLastSprintForRapidView = async (req, res) => {
   try {
-    const options = {
-      fields: ['worklog'],
-      expand: ['worklog']
-    }
+    const { rapidViewId } = req.params
+    console.log(`getLastSprintForRapidView start per board ${rapidViewId}`)
 
-    const jql = `project = DLT AND Sprint = 'Analysis Framing ${project}' AND summary ~ 'Analysis during Framing'`
+    // Recupera l'ultimo sprint chiuso per la board
+    const lastSprint = await jiraService.getLastSprintForRapidView(rapidViewId)
 
-    const results = await jiraSession.searchJira(jql, options)
+    // Recupera le issue associate allo sprint trovato
+    const sprintIssues = await jiraService.getSprintIssues(lastSprint.id)
+
+    console.log('getLastSprintForRapidView end')
+    res.status(200).json({
+      sprintDetail: {
+        sprint: lastSprint,
+        issues: sprintIssues
+      }
+    })
+  } catch (error) {
+    console.error('Errore nel recupero dello sprint:', error)
+    res.status(500).json({
+      message: 'Errore nel recupero dello sprint',
+      error: error.message
+    })
+  }
+}
+
+exports.getBoardIssuesForSprint = async (req, res) => {
+  try {
+    const { rapidViewId, sprintId } = req.params
+    console.log(`getBoardIssuesForSprint start per board ${rapidViewId} e sprint ${sprintId}`)
+
+    const issues = await jiraService.getBoardIssuesForSprint(rapidViewId, sprintId)
+
+    console.log('getBoardIssuesForSprint end')
+    // Incapsula l'array in un oggetto con proprietà "issues"
+    res.status(200).json({ issueSprintDetail: { issues } })
+  } catch (error) {
+    console.error('Errore nel recupero delle issue per lo sprint:', error)
+    res.status(500).json({
+      message: 'Errore nel recupero delle issue per lo sprint',
+      error: error.message
+    })
+  }
+}
+
+exports.getIssueDuringFramingForBusinessRequest = async (req, res) => {
+  try {
+    const { project } = req.params
+    console.log(`getIssueDuringFramingForBusinessRequest start per progetto ${project}`)
+
+    const results = await jiraService.getIssueDuringFramingForBusinessRequest(project)
+
+    console.log('getIssueDuringFramingForBusinessRequest end')
     res.status(200).json({ results })
   } catch (error) {
     console.error('Errore durante la ricerca in Jira:', error)
+    res.status(500).json({
+      message: 'Errore durante la ricerca in Jira',
+      error: error.message
+    })
   }
-}
-
-exports.getListSprint = async (req, res, next) => {
-  const jiraSession = getJiraSession()
-  const { rapidViewId } = req.params
-  let listSprint = []
-  try {
-    console.log('getListSprint start')
-    listSprint = await jiraSession.listSprints(rapidViewId)
-    console.log('getListSprint end')
-  } catch (err) {
-
-  }
-  res.status(200).json({ listSprint })
-}
-
-function getJiraSession () {
-  return new JiraApi({
-    protocol: 'https',
-    host: 'jira.skylogic.com',
-    username: 'dcascone',
-    password: 'DeloitteNapoli456!3',
-    apiVersion: '2',
-    port: 8443,
-    strictSSL: true
-  })
 }
